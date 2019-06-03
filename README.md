@@ -1,2 +1,2 @@
-# Combined (comp-bind)
-A component binding library for unity.
+# CompBind
+CompBind (*"Combined"*) is a component binding library for the Unity3D game engine.
