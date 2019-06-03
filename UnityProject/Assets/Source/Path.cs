@@ -50,7 +50,12 @@ namespace CompBind
 
             foreach (string s in splits)
             {
-                if (Regex.IsMatch(s, @"^\[\d+\]"))
+                if(s == "-")
+                {
+                    // Ignore - empty path
+                    continue;
+                }
+                else if (Regex.IsMatch(s, @"^\[\d+\]"))
                 {
                     // Its an index
                     Match match = Regex.Match(s, @"^\[(\d+)\]");

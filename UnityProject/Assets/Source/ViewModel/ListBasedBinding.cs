@@ -16,12 +16,12 @@ namespace CompBind.ViewModel
 
         public ListBasedBinding(List<ListEntryType> initialValue) : base(initialValue)
         {
-            generateGetterSetter();
+            initialize();
         }
 
         public ListBasedBinding(IDataBinding parent) : base(parent)
         {
-            generateGetterSetter();
+            initialize();
         }
 
         public ListBasedBinding(ListBasedBinding<ListEntryType, ListEntryOutputType> other) : base(other)
@@ -31,8 +31,15 @@ namespace CompBind.ViewModel
             entryBindingTemplate = other.entryBindingTemplate.Clone() as IDataBindingInput<ListEntryOutputType>;
         }
 
-        private void generateGetterSetter()
+        private void initialize()
         {
+            // By default, entries are handled by a simple field based binding
+            var defaultTemplate = new FieldBasedBinding<ListEntryOutputType, ListEntryOutputType>(this);
+            defaultTemplate.SetGetter((value) => value);
+            defaultTemplate.SetSetter((ref ListEntryOutputType current, ListEntryOutputType newValue) => current = newValue);
+            entryBindingTemplate = defaultTemplate;
+
+            // Capsule entry value properties
             valueGetter = (boundList) =>
             {
                 List<ListEntryOutputType> list = new List<ListEntryOutputType>(boundList.Count);
@@ -80,7 +87,7 @@ namespace CompBind.ViewModel
 
         #region Setup helpers
 
-        public EntryNode BindEntries<EntryNode>(EntryNode objectBinding)
+        public EntryNode BindEntryTemplate<EntryNode>(EntryNode objectBinding)
             where EntryNode : IDataBindingInput<ListEntryOutputType>
         {
             entryBindingTemplate = objectBinding;
