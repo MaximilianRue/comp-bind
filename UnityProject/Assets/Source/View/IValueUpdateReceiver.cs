@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 namespace CompBind.View
 {
     /// <summary>
-    /// Interface that receives updates to data paths.
+    /// Receives updates to data paths.
     /// </summary>
     public interface IValueUpdateReceiver
     {

@@ -32,9 +32,6 @@ namespace CompBind.View
         /// <summary>
         /// Returns the databinding object behind the passed path.
         /// </summary>
-        /// <remarks>
-        /// Allows 
-        /// </remarks>
         /// <param name="path"></param>
         /// <returns></returns>
         IDataBinding GetBinding(Path path);

@@ -8,6 +8,15 @@ namespace CompBind.View
 {
     public static class IValueUpdateReceiverExtensions
     {
+        /// <summary>
+        /// Returns the complete, absolute datapath of this update receiver.
+        /// </summary>
+        /// <remarks>
+        /// Update receiver may be child to a metanode. In this case the local path
+        /// is not the absolute one.
+        /// </remarks>
+        /// <param name="valueUpdateReceiver"></param>
+        /// <returns>Absolute datapath of this update receiver.</returns>
         public static Path GetAbsoluteDataPath(this IValueUpdateReceiver valueUpdateReceiver)
         {
             // Start  with local path of update receiver

@@ -50,7 +50,7 @@ namespace CompBind
 
             foreach (string s in splits)
             {
-                if(s == "-")
+                if(s == "-" || string.IsNullOrEmpty(s))
                 {
                     // Ignore - empty path
                     continue;

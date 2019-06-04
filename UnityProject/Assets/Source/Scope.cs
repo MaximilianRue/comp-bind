@@ -9,6 +9,14 @@ using UnityEngine;
 
 namespace CompBind
 {
+    /// <summary>
+    /// Manages databindings and updating subscribers.
+    /// </summary>
+    /// <remarks>
+    /// Main component in CombBind, inherit from this class and setup your bindings in
+    /// the Start() callback. Note that if you override the Update() callback, you have to
+    /// call the baseclass's Update(), too. Otherwise bindings will not be sent out.
+    /// </remarks>
     public class Scope : MonoBehaviour, IDataNode
     {
         private Dictionary<string, IDataBinding> bindings = new Dictionary<string, IDataBinding>();
@@ -19,6 +27,14 @@ namespace CompBind
 
         private PathTree<Path> updatedPaths = new PathTree<Path>();
 
+        /// <summary>
+        /// Triggers notification of all subscribers whose paths were updated
+        /// last frame.
+        /// </summary>
+        /// <remarks>
+        /// Updates happen in a way so that only the minimal number of calls necessary are
+        /// made. For this they are processed in batches at each frame.
+        /// </remarks>
         private void Update()
         {
             if (!updatedPaths.Empty)
@@ -50,6 +66,12 @@ namespace CompBind
 
         #region Binding Helpers
 
+        /// <summary>
+        /// Returns the databinding behind the given path. ArgumentException
+        /// is thrown if the databinding could not be resolved.
+        /// </summary>
+        /// <param name="path">Path of requested databinding.</param>
+        /// <returns>Databinding behind given path.</returns>
         public IDataBinding GetBinding(Path path)
         {
             Path workingCopy = new Path(path);
@@ -62,25 +84,31 @@ namespace CompBind
             }
             catch (Exception)
             {
-                throw new Exception("Could not resolve path: '" + path + "'");
+                throw new ArgumentException("Could not resolve path: '" + path + "'");
             }
         }
-        public IDataBinding GetBinding(string pathString)
-        {
-            return GetBinding(new Path(pathString));
-        }
 
+        /// <summary>
+        /// Sets the value of the databinding specified by the given path.
+        /// Needs the databinding to have a specified setter!
+        /// </summary>
+        /// <typeparam name="OutputType">Type of the value that is set.</typeparam>
+        /// <param name="path">Requested databinding's path.</param>
+        /// <param name="value">Value that should be set.</param>
+        /// <returns>Databinding whose value has been set.</returns>
         public IDataBindingOutput<OutputType> SetValue<OutputType>(Path path, OutputType value)
         {
             IDataBindingOutput<OutputType> dcOutput = (IDataBindingOutput<OutputType>)GetBinding(path);
             dcOutput.SetValue(value);
             return dcOutput;
         }
-        public IDataBindingOutput<OutputType> SetValue<OutputType>(string pathString, OutputType value)
-        {
-            return SetValue(new Path(pathString), value);
-        }
 
+        /// <summary>
+        /// Creates a capture binding for the given path.
+        /// </summary>
+        /// <typeparam name="OutputType">Type that is returned by the created capture binding.</typeparam>
+        /// <param name="fieldName">Name of the databinding that will be used for path creation.</param>
+        /// <returns>Created binding's setup class.</returns>
         public CaptureBindingSetup<OutputType> Bind<OutputType>(string fieldName)
         {
             CaptureBinding<OutputType> newBinding = new CaptureBinding<OutputType>();
@@ -89,6 +117,15 @@ namespace CompBind
             AddBinding(newBinding);
             return new CaptureBindingSetup<OutputType>(newBinding);
         }
+
+        /// <summary>
+        /// Creates an object binding for the given path.
+        /// </summary>
+        /// <typeparam name="InputType">Type that is received by the created object binding.</typeparam>
+        /// <typeparam name="OutputType">Type that is returned by the created object binding.</typeparam>
+        /// <param name="inputObject">Object that is bound.</param>
+        /// <param name="fieldName">Name of the databinding that will be used for path creation.</param>
+        /// <returns>Created binding's setup class.</returns>
         public FieldBasedBindingSetup<InputType, OutputType> Bind<InputType, OutputType>(InputType inputObject, string fieldName)
         {
             FieldBasedBinding<InputType, OutputType> newBinding = new FieldBasedBinding<InputType, OutputType>(inputObject);
@@ -97,6 +134,17 @@ namespace CompBind
             AddBinding(newBinding);
             return new FieldBasedBindingSetup<InputType, OutputType>(newBinding);
         }
+
+        /// <summary>
+        /// Creates an object binding for the given path. Will automatically create default getter & setter.
+        /// </summary>
+        /// <remarks>
+        /// This is shortcut for the fully type specified version.
+        /// </remarks>
+        /// <typeparam name="InputOutputType">Type of in- and output of the created object binding.</typeparam>
+        /// <param name="inputObject">Object that is bound.</param>
+        /// <param name="fieldName">Name of the databinding that will be used for path creation.</param>
+        /// <returns>Created binding's setup class.</returns>
         public FieldBasedBindingSetup<InputOutputType, InputOutputType> Bind<InputOutputType>(InputOutputType inputObject, string fieldName)
         {
             FieldBasedBinding<InputOutputType, InputOutputType> newBinding = new FieldBasedBinding<InputOutputType, InputOutputType>(inputObject);
@@ -111,14 +159,33 @@ namespace CompBind
             return new FieldBasedBindingSetup<InputOutputType, InputOutputType>(newBinding);
         }
 
-        public ListBasedBindingSetup<ListEntryType, ListEntryOutputType> BindList<ListEntryType, ListEntryOutputType>(List<ListEntryType> inputObject, string fieldName)
+        /// <summary>
+        /// Creates a list binding for the given path.
+        /// </summary>
+        /// <typeparam name="ListEntryType">Type of the entries of the bound list.</typeparam>
+        /// <typeparam name="ListEntryOutputType">Type that the list binding should return for each input list entry.</typeparam>
+        /// <param name="list">Bound list.</param>
+        /// <param name="fieldName">Name of the databinding that will be used for path creation.</param>
+        /// <returns>Created binding's setup class.</returns>
+        public ListBasedBindingSetup<ListEntryType, ListEntryOutputType> BindList<ListEntryType, ListEntryOutputType>(List<ListEntryType> list, string fieldName)
         {
-            ListBasedBinding<ListEntryType, ListEntryOutputType> listBinding = new ListBasedBinding<ListEntryType, ListEntryOutputType>(inputObject);
+            ListBasedBinding<ListEntryType, ListEntryOutputType> listBinding = new ListBasedBinding<ListEntryType, ListEntryOutputType>(list);
             PathElement pe = new PathElement(fieldName);
             listBinding.LocalPath = pe;
             AddBinding(listBinding);
             return new ListBasedBindingSetup<ListEntryType, ListEntryOutputType>(listBinding);
         }
+
+        /// <summary>
+        /// Creates a list binding for the given path. Will automatically create default getter & setter for the entries.
+        /// </summary>
+        /// /// <remarks>
+        /// This is shortcut for the fully type specified version. 
+        /// </remarks>
+        /// <typeparam name="ListEntryType">Type of the bound list's elements. Also type that will be returned for each list element.</typeparam>
+        /// <param name="list">Bound list.</param>
+        /// <param name="fieldName">Name of the databinding that will be used for path creation.</param>
+        /// <returns>Created binding's setup class.</returns>
         public ListBasedBindingSetup<ListEntryType, ListEntryType> BindList<ListEntryType>(List<ListEntryType> list, string fieldName)
         {
             ListBasedBinding<ListEntryType, ListEntryType> listBinding = new ListBasedBinding<ListEntryType, ListEntryType>(list);
@@ -137,9 +204,9 @@ namespace CompBind
         /// Directly adds a databinding to the scope.
         /// </summary>
         /// <remarks>
-        /// Usually the setup is done using the Bind[...] methods offered.
+        /// Usually the setup is done using the Bind[...] methods offered by the scope class.
         /// </remarks>
-        /// <param name="dataBinding"></param>
+        /// <param name="dataBinding">Databinding that should be added to the scope's management.</param>
         public void AddBinding(IDataBinding dataBinding)
         {
             bindings[dataBinding.LocalPath.FieldName] = dataBinding;
@@ -149,8 +216,8 @@ namespace CompBind
         /// <summary>
         /// Links two paths, so that the dependend one is updated, when the parent one is updated.
         /// </summary>
-        /// <param name="parentPath"></param>
-        /// <param name="dependendPath"></param>
+        /// <param name="parentPath">Parenting path. If it is updated, the other will be updated, too.</param>
+        /// <param name="dependendPath">Dependend path. If the parent path is updated, it will receive an update, too.</param>
         public void LinkPaths(Path parentPath, Path dependendPath)
         {
             HashSet<Path> set;
@@ -161,13 +228,14 @@ namespace CompBind
             }
             set.Add(dependendPath);
         }
-        public void LinkPaths(string parentPath, string dependendPath)
-        {
-            LinkPaths(new Path(parentPath), new Path(dependendPath));
-        }
 
         #endregion
 
+        /// <summary>
+        /// Initializes scope. Will traverse the local gameobject tree, register & setup all component bindings and
+        /// set the initial values.
+        /// </summary>
+        /// <param name="initialUpdate">If true (default), all bindings will be set initially.</param>
         public void InitializeScope(bool initialUpdate = true)
         {
             // TODO: Initial assert run to make sure all bindings have at least
@@ -184,28 +252,40 @@ namespace CompBind
             }
         }
 
+        /// <summary>
+        /// Initializes this datanode.
+        /// </summary>
         public void InitializeDataNode()
         {
             this.DefaultInitialize();
         }
 
+        /// <summary>
+        /// Registers update receivers at this datanode.
+        /// </summary>
+        /// <param name="newUpdateReceivers">List of update receivers that should be registered.</param>
         public void RegisterUpdateReceivers(List<IValueUpdateReceiver> newUpdateReceivers)
         {
             updateReceivers.AddRange(newUpdateReceivers);
         }
 
+        /// <summary>
+        /// Registers the change for a binding.
+        /// </summary>
+        /// <param name="dataBinding">Databinding whose value has been changed.</param>
         public void OnDataChanged(IDataBinding dataBinding)
         {
             Path absolutePath = dataBinding.GetAbsoluteBindingPath();
             BroadcastDataChange(absolutePath);
         }
+
+        /// <summary>
+        /// Schedules a data change broadcast for the next frame.
+        /// </summary>
+        /// <param name="dataPath">Path that should be updated.</param>
         public void BroadcastDataChange(Path dataPath)
         {
             updatedPaths.Set(dataPath, dataPath);
-        }
-        public void BroadcastDataChange(string pathString)
-        {
-            BroadcastDataChange(new Path(pathString));
         }
     }
 }

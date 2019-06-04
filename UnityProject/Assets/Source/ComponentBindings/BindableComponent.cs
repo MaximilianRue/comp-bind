@@ -103,7 +103,7 @@ namespace CompBind
         [Serializable]
         class ActiveBinding
         {
-            public string BindingPath = "";
+            public string BindingPath = "-";
             public string CallbackName = "";
         }
 

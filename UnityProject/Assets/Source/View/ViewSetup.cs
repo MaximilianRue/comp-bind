@@ -7,8 +7,18 @@ using UnityEngine;
 
 namespace CompBind.View
 {
+    /// <summary>
+    /// Helper (extension) methods that are used when component bindings are initialized.
+    /// </summary>
     public static class ViewSetup
     {
+        /// <summary>
+        /// Default initialization of datanode. Will trigger initialization routines of
+        /// all encountered DataNodes in children. Will register all direct ValueUpdateReceivers.
+        /// </summary>
+        /// <param name="dataNode"></param>
+        /// <param name="rootObject">Where the gameobject tree search should originate from.</param>
+        /// <param name="searchRootItself">If true, also considers the root gameobject for the search.</param>
         public static void DefaultInitialize(this IDataNode dataNode, GameObject rootObject, bool searchRootItself = false)
         {
             List<IBindableComponent> bindableComponents = new List<IBindableComponent>();
@@ -37,11 +47,24 @@ namespace CompBind.View
             dataNode.RegisterUpdateReceivers(valueUpdateReceivers);
         }
 
+        /// <summary>
+        /// Default initialization of datanode. Will trigger initialization routines of
+        /// all encountered DataNodes in children. Will register all direct ValueUpdateReceivers.
+        /// </summary>
+        /// <param name="dataNode"></param>
         public static void DefaultInitialize(this IDataNode dataNode)
         {
             dataNode.DefaultInitialize((dataNode as MonoBehaviour).gameObject);
         }
 
+        /// <summary>
+        /// Starting from a given gameobject, will traverse the hierachy and search for direct
+        /// BindableComponents and DataNodes in children.
+        /// </summary>
+        /// <param name="root">Where the gameobject tree search should originate from.</param>
+        /// <param name="foundBindableComponents">Found bindable components will be added here.</param>
+        /// <param name="foundDataNodes">Found DataNodes will be added here.</param>
+        /// <param name="searchRoot">If true, also considers the root gameobject for the search.</param>
         public static void SearchViewInterfaces(
             GameObject root,
             ref List<IBindableComponent> foundBindableComponents,

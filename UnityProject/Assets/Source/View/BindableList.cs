@@ -9,10 +9,21 @@ using UnityEngine;
 
 namespace CompBind.View
 {
+    /// <summary>
+    /// Root gameobject for bound lists.
+    /// </summary>
+    /// <remarks>
+    /// This is a metabinding, which means it manages update receivers, but
+    /// is also receiving updates.
+    /// </remarks>
     public class BindableList : MonoBehaviour, IMetaDataNode
     {
+        [Tooltip("Path of the list this gameobject should visualize.")]
         public string ListBindingPath;
+        [Tooltip("Gameobject that should be used to visualize the list entries.")]
         public GameObject ListEntryTemplate;
+        [Tooltip("Toggle if the entry template should be hidden when the game runs. "+
+            "Useful, if you want to place it directly below as a child instead of using a prefab.")]
         public bool HideEntryOnStart = false;
 
         public Path BindingPath { get; set; }
@@ -20,6 +31,9 @@ namespace CompBind.View
 
         private Dictionary<int, ListBindingEntry> updateReceivers = new Dictionary<int, ListBindingEntry>();
 
+        /// <summary>
+        /// Update the whole list. Will trigger update for each child managed.
+        /// </summary>
         public void ForceUpdate()
         {
             foreach(ListBindingEntry entry in updateReceivers.Values)
@@ -28,6 +42,12 @@ namespace CompBind.View
             }
         }
 
+        /// <summary>
+        /// DataBinding getter for managed update receivers. Will prepend own path
+        /// before handing it to own DataNode, if path is not global.
+        /// </summary>
+        /// <param name="path"></param>
+        /// <returns></returns>
         public IDataBinding GetBinding(Path path)
         {
             if (path.IsGlobal)
@@ -40,11 +60,19 @@ namespace CompBind.View
                 return Context.GetBinding(absolutePath);
             }
         }
+
+        /// <summary>
+        /// Returns own DataBinding.
+        /// </summary>
+        /// <returns></returns>
         public IDataBinding GetBinding()
         {
             return Context.GetBinding(BindingPath);
         }
 
+        /// <summary>
+        /// Initializes this bindable. Will create child objects and populate them.
+        /// </summary>
         public void InitializeDataNode()
         {
             if (HideEntryOnStart)
@@ -56,6 +84,10 @@ namespace CompBind.View
             makeAllListEntries();
         }
 
+        /// <summary>
+        /// Triggered by managing DataNode if there is an value update.
+        /// </summary>
+        /// <param name="updatedPath">Path that has been updated.</param>
         public void OnUpdate(Path updatedPath)
         {
             // Check if this is for the list
@@ -140,6 +172,9 @@ namespace CompBind.View
         }
     }
 
+    /// <summary>
+    /// DataNode managing one entry of a parenting list.
+    /// </summary>
     class ListBindingEntry : IMetaDataNode
     {
         public GameObject EntryGameobject { get; set; }
